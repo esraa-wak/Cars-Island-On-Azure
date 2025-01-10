@@ -1,52 +1,40 @@
-name: Build and Deploy ASP.Net Core App to Azure Web App - CarWebService
+name: Build and deploy ASP.NET app to Azure Web App - carportal2
 
 on:
   push:
     branches:
-      - main  # Adjust if using another branch
+      - main
+  workflow_dispatch: # Allow manual trigger of the workflow
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-and-deploy:
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout Code
+      # Step 1: Checkout code from GitHub
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET Core SDK
+      # Step 2: Set up .NET Framework
+      - name: Set up .NET Framework
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '6.0.x'  # Adjust this based on your project version
+          dotnet-version: '4.7.2' # Use compatible .NET Framework version
 
-      - name: Restore Dependencies
-        run: dotnet restore
+      # Step 3: Restore dependencies
+      - name: Restore dependencies
+        run: nuget restore Cars-Island-On-Azure.sln
 
-      - name: Build Project
-        run: dotnet build --configuration Release --no-restore
+      # Step 4: Build the application
+      - name: Build the application
+        run: msbuild /p:Configuration=Release Cars-Island-On-Azure.sln
 
-      - name: Publish Project
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: carwebservice-artifact
-          path: ${{env.DOTNET_ROOT}}/myapp
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: carwebservice-artifact
-          path: .
-
+      # Step 5: Deploy to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: CarWebService
+          app-name: 'carportal2' # Your Azure Web App name
+          slot-name: 'production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          package: 'esraa-wak/Cars-Island-On-Azure'
+   
