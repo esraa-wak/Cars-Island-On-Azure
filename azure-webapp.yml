@@ -1,9 +1,9 @@
-name: Build and Deploy ASP.NET Framework App to Azure Web App - carportal2
+name: Build and Deploy Cars-Island Project to Azure Web App
 
 on:
   push:
     branches:
-      - main # Trigger the workflow on push to 'main' branch
+      - main
   workflow_dispatch: # Allow manual trigger of the workflow
 
 jobs:
@@ -11,25 +11,27 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # Step 1: Checkout code
+      # Step 1: Checkout Code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Set up NuGet
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v1
+      # Step 2: Setup .NET Core
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
 
       # Step 3: Restore NuGet Packages
       - name: Restore NuGet Packages
-        run: nuget restore Cars-Island-On-Azure.sln
+        run: dotnet restore src/web-api/CarsIsland.API/CarsIsland.API.csproj
 
-      # Step 4: Build the application
-      - name: Build the application
-        run: msbuild Cars-Island-On-Azure.sln /p:Configuration=Release
+      # Step 4: Build the Web API
+      - name: Build the Web API
+        run: dotnet build src/web-api/CarsIsland.API/CarsIsland.API.csproj --configuration Release
 
-      # Step 5: Publish the application
-      - name: Publish the application
-        run: msbuild Cars-Island-On-Azure.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:WebPublishMethod=FileSystem /p:publishUrl=./publish
+      # Step 5: Publish the Web API
+      - name: Publish the Web API
+        run: dotnet publish src/web-api/CarsIsland.API/CarsIsland.API.csproj -c Release -o ./publish
 
       # Step 6: Deploy to Azure Web App
       - name: Deploy to Azure Web App
@@ -39,5 +41,5 @@ jobs:
           slot-name: 'production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ./publish
-    
+   
       
