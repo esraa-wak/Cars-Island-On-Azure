@@ -1,9 +1,9 @@
-name: Build and deploy ASP.NET app to Azure Web App - carportal2
+name: Build and Deploy ASP.NET Core App to Azure Web App - carportal2
 
 on:
   push:
     branches:
-      - main
+      - main # Trigger workflow on push to 'main' branch
   workflow_dispatch: # Allow manual trigger of the workflow
 
 jobs:
@@ -11,30 +11,34 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # Step 1: Checkout code from GitHub
+      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Set up .NET Framework
-      - name: Set up .NET Framework
+      # Step 2: Set up .NET Core
+      - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '4.7.2' # Use compatible .NET Framework version
+          dotnet-version: '6.0.x' # Match your runtime stack
 
       # Step 3: Restore dependencies
       - name: Restore dependencies
-        run: nuget restore Cars-Island-On-Azure.sln
+        run: dotnet restore ./src/web-api/CarsIsland.API/CarsIsland.API.csproj
 
       # Step 4: Build the application
       - name: Build the application
-        run: msbuild /p:Configuration=Release Cars-Island-On-Azure.sln
+        run: dotnet build ./src/web-api/CarsIsland.API/CarsIsland.API.csproj --configuration Release
 
-      # Step 5: Deploy to Azure Web App
+      # Step 5: Publish the application
+      - name: Publish the application
+        run: dotnet publish ./src/web-api/CarsIsland.API/CarsIsland.API.csproj -c Release -o ./publish
+
+      # Step 6: Deploy to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'carportal2' # Your Azure Web App name
           slot-name: 'production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: 'esraa-wak/Cars-Island-On-Azure'
-   
+          package: ./publish
+      
